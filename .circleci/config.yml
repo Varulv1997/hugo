@@ -16,22 +16,4 @@ jobs:
                 git clone git@github.com:gohugoio/hugoDocs.git
                 cd hugo
                 go mod download
-      - persist_to_workspace:
-          root: .
-          paths: .
-workflows:
-  version: 2
-  release:
-      jobs:  
-        - build:
-            filters:
-              branches:
-                only: /release-.*/
-        - hold:
-            type: approval
-            requires:
-              - build
-        - release:
-            context: org-global
-            requires:
-              - hold
+ 
