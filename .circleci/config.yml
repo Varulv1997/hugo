@@ -1,52 +1,26 @@
-defaults: &defaults
-  docker:
-      - image: bepsays/ci-goreleaser:1.14.3
-  environment:
-    CGO_ENABLED: "0"
-
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
   build:
-    <<: *defaults
-    steps:
-      - checkout:
-          path: hugo
-      - run:
-            command: |
-                git clone git@github.com:gohugoio/hugoDocs.git
-                cd hugo
-                go mod download
-                sleep 5
-                go mod verify
-                go test -p 1 ./...
-      - persist_to_workspace:
-          root: .
-          paths: .
-  release:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: /root/project
-      - run:
-            command: |
-                    cd hugo
-                    git config --global user.email "bjorn.erik.pedersen+hugoreleaser@gmail.com"
-                    git config --global user.name "hugoreleaser"
-                    go run -tags release main.go release -r ${CIRCLE_BRANCH}
+    docker:
+      # specify the version
+      - image: circleci/golang:1.9
 
-workflows:
-  version: 2
-  release:
-      jobs:  
-        - build:
-            filters:
-              branches:
-                only: /release-.*/
-        - hold:
-            type: approval
-            requires:
-              - build
-        - release:
-            context: org-global
-            requires:
-              - hold
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
+
+    #### TEMPLATE_NOTE: go expects specific checkout path representing url
+    #### expecting it in the form of
+    ####   /go/src/github.com/circleci/go-tool
+    ####   /go/src/bitbucket.org/circleci/go-tool
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    steps:
+      - checkout
+
+      # specify any bash command here prefixed with `run: `
+      - run: go get -v -t -d ./...
+      - run: go test -v ./...
